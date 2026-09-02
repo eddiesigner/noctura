@@ -8,11 +8,20 @@
 <body>
   <main class="card">
     <header class="header">
-      <img class="logo" src="icons/icon48.png" alt="" />
-      <div>
-        <h1>Noctura</h1>
-        <p class="subtitle">Settings</p>
+      <div class="header-title">
+        <img class="logo" src="icons/icon48.png" alt="" />
+        <div>
+          <h1>Noctura</h1>
+          <p class="subtitle">Settings</p>
+        </div>
       </div>
+      <a
+        class="kofi-link"
+        href="https://ko-fi.com/eddiesigner"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Buy me a coffee on Ko-fi"
+      ><span class="kofi-icon" aria-hidden="true">☕</span>Buy me a coffee</a>
     </header>
 
     <section class="section">
@@ -30,6 +39,17 @@
         </div>
         <label class="switch">
           <input type="checkbox" id="rememberToggle" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </label>
+      </div>
+
+      <div class="row row-divided">
+        <div>
+          <h2>Match system dark mode</h2>
+          <p class="hint">Automatically turn on dark mode on any site when your OS is in dark mode. Press the shortcut to override it for the page you're on — that override only applies there, not remembered for the site.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoMatchToggle" />
           <span class="switch-track"><span class="switch-thumb"></span></span>
         </label>
       </div>

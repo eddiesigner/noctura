@@ -2,6 +2,7 @@
 // Only responsible for seeding default settings on install.
 const DEFAULT_SETTINGS = {
   rememberPerSite: true,
+  autoMatchSystemDarkMode: false,
   shortcut: { alt: true, ctrl: false, shift: false, meta: false, code: 'KeyD' }
 };
 

@@ -9,6 +9,7 @@
 
   const DEFAULT_SETTINGS = {
     rememberPerSite: true,
+    autoMatchSystemDarkMode: false,
     shortcut: SimpleDarkModeShortcut.DEFAULT_SHORTCUT
   };
 
@@ -28,10 +29,20 @@
   let enabled = false;
   let origin;
 
+  // True when this page's dark mode was turned on automatically because the
+  // OS is in dark mode (not from an explicit per-site choice). While true,
+  // toggling never writes to storage, so the shortcut/popup can override
+  // dark mode for this page view only, without affecting future visits.
+  let sessionOnly = false;
+
   try {
     origin = location.origin;
   } catch (e) {
     origin = null;
+  }
+
+  function prefersSystemDark() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
   }
 
   function applyStyle() {
@@ -48,7 +59,7 @@
   }
 
   function persistState() {
-    if (!settings.rememberPerSite || !origin) return;
+    if (sessionOnly || !settings.rememberPerSite || !origin) return;
     chrome.storage.local.get('sites', (data) => {
       const sites = (data && data.sites) || {};
       if (enabled) {
@@ -106,11 +117,17 @@
     return true;
   });
 
-  // Initialize from stored settings + remembered per-site choice.
+  // Initialize from stored settings, remembered per-site choice, and (as a
+  // fallback default only) whether to auto-match the OS dark mode setting.
+  // An explicit remembered per-site choice always takes priority.
   chrome.storage.local.get(['settings', 'sites'], (data) => {
     settings = Object.assign({}, DEFAULT_SETTINGS, data && data.settings);
     const sites = (data && data.sites) || {};
+
     if (settings.rememberPerSite && origin && sites[origin]) {
+      setEnabled(true, false);
+    } else if (settings.autoMatchSystemDarkMode && prefersSystemDark()) {
+      sessionOnly = true;
       setEnabled(true, false);
     }
   });

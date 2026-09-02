@@ -3,12 +3,14 @@
 
   const DEFAULT_SETTINGS = {
     rememberPerSite: true,
+    autoMatchSystemDarkMode: false,
     shortcut: SimpleDarkModeShortcut.DEFAULT_SHORTCUT
   };
 
   const shortcutInput = document.getElementById('shortcutInput');
   const shortcutError = document.getElementById('shortcutError');
   const rememberToggle = document.getElementById('rememberToggle');
+  const autoMatchToggle = document.getElementById('autoMatchToggle');
   const clearSitesBtn = document.getElementById('clearSitesBtn');
   const toggleSitesBtn = document.getElementById('toggleSitesBtn');
   const siteList = document.getElementById('siteList');
@@ -80,6 +82,7 @@
     settings = Object.assign({}, DEFAULT_SETTINGS, data && data.settings);
     renderShortcut();
     rememberToggle.checked = !!settings.rememberPerSite;
+    autoMatchToggle.checked = !!settings.autoMatchSystemDarkMode;
   });
   refreshSiteCount();
 
@@ -146,6 +149,11 @@
 
   rememberToggle.addEventListener('change', () => {
     settings = Object.assign({}, settings, { rememberPerSite: rememberToggle.checked });
+    saveSettings();
+  });
+
+  autoMatchToggle.addEventListener('change', () => {
+    settings = Object.assign({}, settings, { autoMatchSystemDarkMode: autoMatchToggle.checked });
     saveSettings();
   });
 

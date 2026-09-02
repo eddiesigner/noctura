@@ -1,9 +1,11 @@
 # Noctura
 
-A small, on-demand dark mode extension for any website. No automatic switching
-based on the site, your OS, your browser theme, or the time of day — dark mode
-only turns on when *you* turn it on, via the toolbar popup or a keyboard
-shortcut (default: `Alt/⌥ + D`, customizable in Settings).
+A small, on-demand dark mode extension for any website. By default, nothing
+switches automatically — dark mode only turns on when *you* turn it on, via
+the toolbar popup or a keyboard shortcut (default: `Alt/⌥ + D`, customizable
+in Settings). There's one opt-in exception: a "Match system dark mode"
+setting (off by default) that follows your OS's dark mode preference — see
+[Match system dark mode](#match-system-dark-mode) below.
 
 ## How it works
 
@@ -98,6 +100,21 @@ once, then enable the extension in Safari's **Settings → Extensions** (and,
 on first run, allow unsigned extensions via **Develop → Allow Unsigned
 Extensions** if you're on a non-App Store build). Requires Xcode and an Apple
 Developer account for anything beyond local testing/distribution.
+
+## Match system dark mode
+
+Off by default. When turned on in Settings, a page defaults to dark mode if
+the OS reports `prefers-color-scheme: dark` — but only for sites you haven't
+already set an explicit preference for. An explicit remembered per-site
+choice (from manually toggling with "remember per website" on) always takes
+priority over this setting.
+
+Pressing the shortcut (or popup toggle) on a page whose dark mode came from
+this setting overrides it for that page view only — it's not written to
+per-site memory, so reloading the page or revisiting the site later goes
+back to following the OS preference. It's only checked once, when the page
+loads; it doesn't react live if you flip the OS theme while the page stays
+open.
 
 ## Notes on the keyboard shortcut
 
