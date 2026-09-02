@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Noctura</title>
+<link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main class="card">
+    <header class="header">
+      <img class="logo" src="icons/icon32.png" alt="" />
+      <h1>Noctura</h1>
+    </header>
+
+    <div class="site-row">
+      <span class="site-label">This site</span>
+      <span id="siteHost" class="site-host">—</span>
+    </div>
+
+    <button id="toggleBtn" class="toggle" type="button" aria-pressed="false">
+      <span class="toggle-track">
+        <span class="toggle-thumb"></span>
+      </span>
+      <span id="toggleText" class="toggle-text">Off</span>
+    </button>
+
+    <p id="statusMsg" class="status-msg" hidden></p>
+
+    <footer class="footer">
+      <span id="shortcutHint" class="shortcut-hint">⌥ D</span>
+      <button id="optionsBtn" class="link-btn" type="button">Customize shortcut</button>
+    </footer>
+  </main>
+  <script src="shortcut-utils.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Noctura – Settings</title>
+<link rel="stylesheet" href="options.css" />
+</head>
+<body>
+  <main class="card">
+    <header class="header">
+      <img class="logo" src="icons/icon48.png" alt="" />
+      <div>
+        <h1>Noctura</h1>
+        <p class="subtitle">Settings</p>
+      </div>
+    </header>
+
+    <section class="section">
+      <h2>Keyboard shortcut</h2>
+      <p class="hint">Click the field, then press the key combination you want. Used to toggle dark mode on the page you're viewing.</p>
+      <button id="shortcutInput" class="shortcut-input" type="button">⌥ D</button>
+      <p id="shortcutError" class="error" hidden></p>
+    </section>
+
+    <section class="section">
+      <div class="row">
+        <div>
+          <h2>Remember per website</h2>
+          <p class="hint">Keep dark mode on for a site the next time you visit, until you toggle it off again.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="rememberToggle" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="row">
+        <div>
+          <h2>Remembered sites</h2>
+          <p class="hint" id="siteCount">0 sites currently remembered.</p>
+        </div>
+        <button id="clearSitesBtn" class="secondary-btn" type="button">Clear all</button>
+      </div>
+    </section>
+
+    <p id="savedMsg" class="saved-msg" hidden>Saved</p>
+  </main>
+  <script src="shortcut-utils.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>
