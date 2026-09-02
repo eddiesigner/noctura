@@ -173,6 +173,40 @@ body {
   color: var(--danger);
 }
 
+.secondary-btn.neutral:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.site-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.site-list[hidden] {
+  display: none;
+}
+
+.site-list li {
+  font-size: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+  word-break: break-all;
+}
+
 .saved-msg {
   text-align: center;
   font-size: 12px;

@@ -10,12 +10,15 @@
   const shortcutError = document.getElementById('shortcutError');
   const rememberToggle = document.getElementById('rememberToggle');
   const clearSitesBtn = document.getElementById('clearSitesBtn');
+  const toggleSitesBtn = document.getElementById('toggleSitesBtn');
+  const siteList = document.getElementById('siteList');
   const siteCount = document.getElementById('siteCount');
   const savedMsg = document.getElementById('savedMsg');
 
   const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
   let settings = DEFAULT_SETTINGS;
   let recording = false;
+  let sitesVisible = false;
 
   function renderShortcut() {
     shortcutInput.textContent = SimpleDarkModeShortcut.formatShortcut(settings.shortcut, isMac);
@@ -48,8 +51,28 @@
 
   function refreshSiteCount() {
     chrome.storage.local.get('sites', (data) => {
-      const count = data && data.sites ? Object.keys(data.sites).length : 0;
-      siteCount.textContent = count === 1 ? '1 site currently remembered.' : `${count} sites currently remembered.`;
+      const origins = Object.keys((data && data.sites) || {});
+      const hasSites = origins.length > 0;
+
+      siteCount.textContent = origins.length === 1
+        ? '1 site currently remembered.'
+        : `${origins.length} sites currently remembered.`;
+
+      toggleSitesBtn.hidden = !hasSites;
+      clearSitesBtn.hidden = !hasSites;
+
+      if (!hasSites) {
+        sitesVisible = false;
+        siteList.hidden = true;
+        toggleSitesBtn.textContent = 'Show sites';
+      }
+
+      siteList.innerHTML = '';
+      for (const origin of origins.sort()) {
+        const li = document.createElement('li');
+        li.textContent = origin;
+        siteList.appendChild(li);
+      }
     });
   }
 
@@ -124,6 +147,12 @@
   rememberToggle.addEventListener('change', () => {
     settings = Object.assign({}, settings, { rememberPerSite: rememberToggle.checked });
     saveSettings();
+  });
+
+  toggleSitesBtn.addEventListener('click', () => {
+    sitesVisible = !sitesVisible;
+    siteList.hidden = !sitesVisible;
+    toggleSitesBtn.textContent = sitesVisible ? 'Hide sites' : 'Show sites';
   });
 
   clearSitesBtn.addEventListener('click', () => {

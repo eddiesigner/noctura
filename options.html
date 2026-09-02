@@ -41,8 +41,12 @@
           <h2>Remembered sites</h2>
           <p class="hint" id="siteCount">0 sites currently remembered.</p>
         </div>
-        <button id="clearSitesBtn" class="secondary-btn" type="button">Clear all</button>
+        <div class="button-group">
+          <button id="toggleSitesBtn" class="secondary-btn neutral" type="button">Show sites</button>
+          <button id="clearSitesBtn" class="secondary-btn" type="button">Clear all</button>
+        </div>
       </div>
+      <ul id="siteList" class="site-list" hidden></ul>
     </section>
 
     <p id="savedMsg" class="saved-msg" hidden>Saved</p>
