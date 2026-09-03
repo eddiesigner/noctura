@@ -3,9 +3,11 @@
 A small, on-demand dark mode extension for any website. By default, nothing
 switches automatically — dark mode only turns on when *you* turn it on, via
 the toolbar popup or a keyboard shortcut (default: `Alt/⌥ + D`, customizable
-in Settings). There's one opt-in exception: a "Match system dark mode"
-setting (off by default) that follows your OS's dark mode preference — see
-[Match system dark mode](#match-system-dark-mode) below.
+in Settings). There are two opt-in exceptions, both off by default and
+mutually exclusive with each other: [Match system dark
+mode](#match-system-dark-mode), which follows the OS preference, and
+[Scheduled dark mode](#scheduled-dark-mode), which follows a daily time
+range you set.
 
 ## How it works
 
@@ -37,10 +39,14 @@ avoids the complexity/fragility of a full per-site theming engine.
 ```
 manifest.json           Chrome / Arc / Edge (Manifest V3)
 manifest-firefox.json    Firefox variant (Manifest V3)
-background.js            Seeds default settings on install
+background.js            Seeds default settings; manages the schedule alarm
 content.js                Applies/removes the dark styles, handles the shortcut, persists per-site state
-popup.html/css/js        Toolbar popup: on/off toggle for the current site
-options.html/css/js      Settings: shortcut recorder, remember-per-site toggle, clear remembered sites
+popup.html/css/js        Toolbar popup: on/off toggle for the current site, plus the automatic-mode switches
+options.html/css/js      Settings: shortcut recorder, remembered sites, the automatic-mode switches
+shortcut-utils.js         Shared: keyboard shortcut matching/formatting
+schedule-utils.js         Shared: "is now within the scheduled range" logic
+broadcast-utils.js        Shared: live-apply a settings change to every open tab
+auto-modes-ui.js          Shared: wires up Remember/Match-system/Scheduled and their mutual exclusion
 icons/                    Toolbar icon (16/32/48/128px)
 ```
 
@@ -63,8 +69,11 @@ Test it:
 - Press `Alt/⌥ + D` on the page — it should toggle the same way.
 - Reload the page — dark mode should still be on for that site (per-site
   memory). Toggle it off and reload again to confirm it stays off.
-- Open **Customize shortcut** from the popup to record a different key
-  combination, toggle "Remember per website," or clear all remembered sites.
+- Open **Settings** from the popup to record a different key combination,
+  toggle "Remember per website," "Match system dark mode," or "Scheduled
+  dark mode," or clear all remembered sites.
+- Turn on "Scheduled dark mode" with a range that includes the current
+  time — the page should go dark immediately, no reload.
 
 ## Firefox
 
@@ -103,18 +112,40 @@ Developer account for anything beyond local testing/distribution.
 
 ## Match system dark mode
 
-Off by default. When turned on in Settings, a page defaults to dark mode if
-the OS reports `prefers-color-scheme: dark` — but only for sites you haven't
-already set an explicit preference for. An explicit remembered per-site
-choice (from manually toggling with "remember per website" on) always takes
-priority over this setting.
+Off by default, in Settings or the popup. When it's on, it's the sole
+authority over every page's dark mode: a page is dark whenever the OS
+reports `prefers-color-scheme: dark`, and light otherwise. The shortcut and
+the popup's "Dark mode" toggle are disabled while this is on — there's no
+per-page override, and any previously remembered per-site choices are
+ignored until you turn it back off.
 
-Pressing the shortcut (or popup toggle) on a page whose dark mode came from
-this setting overrides it for that page view only — it's not written to
-per-site memory, so reloading the page or revisiting the site later goes
-back to following the OS preference. It's only checked once, when the page
-loads; it doesn't react live if you flip the OS theme while the page stays
-open.
+Turning the setting on or off applies immediately to every open page — no
+reload needed. It doesn't react live to the OS theme changing while a page
+stays open with the setting already on; that's only checked at the moment
+the page loads or the setting itself changes.
+
+## Scheduled dark mode
+
+Off by default. Pick a daily "From" and "To" time (defaults: 8:00 PM to
+8:00 AM) and any page is dark during that range, light outside it — same
+"sole authority, no per-page override" behavior as Match system dark mode,
+and the two are mutually exclusive (turning one on turns the other off and
+disables its switch). "Remember per website" is locked while either
+automatic mode is on, since there's nothing to manually remember.
+
+Ranges that cross midnight (e.g. 8pm→8am) work as expected. An identical
+From/To time is treated as "always on" (24h) rather than "always off." The
+time is always your system's local time — it's read straight from the OS
+clock, so it already accounts for timezone and DST with no extra setup, and
+self-corrects if you change either.
+
+Applying the setting or editing the times updates open tabs immediately.
+Beyond that, since MV3 background pages don't stay alive for hours waiting
+for 8pm, the actual boundary crossing is caught by a `chrome.alarms` check
+that runs once a minute while this is on — so there can be up to about a
+minute of lag between the clock hitting your chosen time and the page
+actually flipping, and a tab that's been discarded/backgrounded will just
+catch up next time it's focused or reloaded.
 
 ## Notes on the keyboard shortcut
 

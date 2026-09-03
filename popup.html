@@ -21,17 +21,46 @@
       <span class="toggle-track">
         <span class="toggle-thumb"></span>
       </span>
-      <span id="toggleText" class="toggle-text">Off</span>
+      <span id="toggleText" class="toggle-text">Dark mode off</span>
     </button>
 
     <p id="statusMsg" class="status-msg" hidden></p>
 
+    <label class="setting-row" for="autoMatchToggle">
+      <span class="setting-label">Match system dark mode</span>
+      <span class="switch">
+        <input type="checkbox" id="autoMatchToggle" />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </span>
+    </label>
+
+    <label class="setting-row" for="scheduleToggle">
+      <span class="setting-label">Scheduled dark mode</span>
+      <span class="switch">
+        <input type="checkbox" id="scheduleToggle" />
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+      </span>
+    </label>
+    <div id="scheduleFields" class="schedule-fields" hidden>
+      <div class="schedule-field">
+        <span class="schedule-label">From</span>
+        <input type="time" id="scheduleFrom" class="time-input" value="20:00" />
+      </div>
+      <div class="schedule-field">
+        <span class="schedule-label">To</span>
+        <input type="time" id="scheduleTo" class="time-input" value="08:00" />
+      </div>
+    </div>
+
     <footer class="footer">
       <span id="shortcutHint" class="shortcut-hint">⌥ D</span>
-      <button id="optionsBtn" class="link-btn" type="button">Customize shortcut</button>
+      <button id="optionsBtn" class="link-btn" type="button">Settings</button>
     </footer>
   </main>
   <script src="shortcut-utils.js"></script>
+  <script src="schedule-utils.js"></script>
+  <script src="broadcast-utils.js"></script>
+  <script src="auto-modes-ui.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

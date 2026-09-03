@@ -4,6 +4,7 @@
   const DEFAULT_SETTINGS = {
     rememberPerSite: true,
     autoMatchSystemDarkMode: false,
+    scheduledDarkMode: NocturaSchedule.DEFAULT_SCHEDULE,
     shortcut: SimpleDarkModeShortcut.DEFAULT_SHORTCUT
   };
 
@@ -11,6 +12,10 @@
   const shortcutError = document.getElementById('shortcutError');
   const rememberToggle = document.getElementById('rememberToggle');
   const autoMatchToggle = document.getElementById('autoMatchToggle');
+  const scheduleToggle = document.getElementById('scheduleToggle');
+  const scheduleFrom = document.getElementById('scheduleFrom');
+  const scheduleTo = document.getElementById('scheduleTo');
+  const scheduleFields = document.getElementById('scheduleFields');
   const clearSitesBtn = document.getElementById('clearSitesBtn');
   const toggleSitesBtn = document.getElementById('toggleSitesBtn');
   const siteList = document.getElementById('siteList');
@@ -33,21 +38,17 @@
     showSaved._t = setTimeout(() => savedMsg.classList.remove('visible'), 1200);
   }
 
-  function saveSettings() {
-    chrome.storage.local.set({ settings }, () => {
-      showSaved();
-      broadcastSettings();
-    });
-  }
-
-  function broadcastSettings() {
-    chrome.tabs.query({}, (tabs) => {
-      for (const tab of tabs) {
-        if (!tab.id) continue;
-        chrome.tabs.sendMessage(tab.id, { type: 'SETTINGS_UPDATED', settings }, () => {
-          void chrome.runtime.lastError; // ignore tabs without our content script
-        });
-      }
+  // Always merges onto the latest storage state (not the possibly-stale
+  // local `settings` snapshot), so this can't clobber a change made by
+  // auto-modes-ui.js's own independent read-modify-write cycle.
+  function saveShortcut(shortcut) {
+    chrome.storage.local.get('settings', (data) => {
+      const next = Object.assign({}, data && data.settings, { shortcut });
+      chrome.storage.local.set({ settings: next }, () => {
+        settings = next;
+        showSaved();
+        NocturaBroadcast.broadcastSettingsToAllTabs(next);
+      });
     });
   }
 
@@ -81,10 +82,17 @@
   chrome.storage.local.get('settings', (data) => {
     settings = Object.assign({}, DEFAULT_SETTINGS, data && data.settings);
     renderShortcut();
-    rememberToggle.checked = !!settings.rememberPerSite;
-    autoMatchToggle.checked = !!settings.autoMatchSystemDarkMode;
   });
   refreshSiteCount();
+
+  NocturaAutoModesUI.wireAutoModes({
+    autoMatchToggle,
+    scheduleToggle,
+    scheduleFrom,
+    scheduleTo,
+    scheduleFields,
+    rememberToggle
+  });
 
   const IGNORED_CODES = new Set([
     'ControlLeft', 'ControlRight',
@@ -144,17 +152,7 @@
     settings = Object.assign({}, settings, { shortcut });
     shortcutError.hidden = true;
     stopRecording();
-    saveSettings();
-  });
-
-  rememberToggle.addEventListener('change', () => {
-    settings = Object.assign({}, settings, { rememberPerSite: rememberToggle.checked });
-    saveSettings();
-  });
-
-  autoMatchToggle.addEventListener('change', () => {
-    settings = Object.assign({}, settings, { autoMatchSystemDarkMode: autoMatchToggle.checked });
-    saveSettings();
+    saveShortcut(shortcut);
   });
 
   toggleSitesBtn.addEventListener('click', () => {

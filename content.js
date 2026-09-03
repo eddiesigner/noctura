@@ -10,6 +10,7 @@
   const DEFAULT_SETTINGS = {
     rememberPerSite: true,
     autoMatchSystemDarkMode: false,
+    scheduledDarkMode: NocturaSchedule.DEFAULT_SCHEDULE,
     shortcut: SimpleDarkModeShortcut.DEFAULT_SHORTCUT
   };
 
@@ -28,12 +29,6 @@
   let settings = DEFAULT_SETTINGS;
   let enabled = false;
   let origin;
-
-  // True when this page's dark mode was turned on automatically because the
-  // OS is in dark mode (not from an explicit per-site choice). While true,
-  // toggling never writes to storage, so the shortcut/popup can override
-  // dark mode for this page view only, without affecting future visits.
-  let sessionOnly = false;
 
   try {
     origin = location.origin;
@@ -59,7 +54,7 @@
   }
 
   function persistState() {
-    if (sessionOnly || !settings.rememberPerSite || !origin) return;
+    if (!settings.rememberPerSite || !origin) return;
     chrome.storage.local.get('sites', (data) => {
       const sites = (data && data.sites) || {};
       if (enabled) {
@@ -81,9 +76,43 @@
     if (persist !== false) persistState();
   }
 
+  function autoModeActive() {
+    const schedule = NocturaSchedule.normalizeSchedule(settings.scheduledDarkMode);
+    return settings.autoMatchSystemDarkMode || schedule.enabled;
+  }
+
+  // While either automatic mode is on, it's the sole authority over this
+  // page's dark mode — manual toggling (shortcut or popup) is a no-op so
+  // the page always reflects that mode, with no per-page override.
   function toggle() {
+    if (autoModeActive()) return enabled;
     setEnabled(!enabled);
     return enabled;
+  }
+
+  // Recomputes and (re)applies dark mode from the current settings, live —
+  // used whenever settings change while the page is already open, so
+  // turning an automatic mode on/off (or editing the schedule) takes effect
+  // immediately without a reload. Scheduled mode takes priority since the
+  // UI keeps it mutually exclusive with auto-match, but both can't be on.
+  function applyState() {
+    const schedule = NocturaSchedule.normalizeSchedule(settings.scheduledDarkMode);
+    if (schedule.enabled) {
+      setEnabled(NocturaSchedule.isWithinSchedule(schedule), false);
+      return;
+    }
+    if (settings.autoMatchSystemDarkMode) {
+      setEnabled(prefersSystemDark(), false);
+      return;
+    }
+    if (!settings.rememberPerSite || !origin) {
+      setEnabled(false, false);
+      return;
+    }
+    chrome.storage.local.get('sites', (data) => {
+      const sites = (data && data.sites) || {};
+      setEnabled(!!sites[origin], false);
+    });
   }
 
   document.addEventListener(
@@ -110,6 +139,7 @@
         break;
       case 'SETTINGS_UPDATED':
         settings = Object.assign({}, DEFAULT_SETTINGS, msg.settings);
+        applyState();
         break;
       default:
         break;
@@ -117,18 +147,10 @@
     return true;
   });
 
-  // Initialize from stored settings, remembered per-site choice, and (as a
-  // fallback default only) whether to auto-match the OS dark mode setting.
-  // An explicit remembered per-site choice always takes priority.
-  chrome.storage.local.get(['settings', 'sites'], (data) => {
+  // Initialize from stored settings, then defer to applyState() for the
+  // same priority logic used on every later live update.
+  chrome.storage.local.get('settings', (data) => {
     settings = Object.assign({}, DEFAULT_SETTINGS, data && data.settings);
-    const sites = (data && data.sites) || {};
-
-    if (settings.rememberPerSite && origin && sites[origin]) {
-      setEnabled(true, false);
-    } else if (settings.autoMatchSystemDarkMode && prefersSystemDark()) {
-      sessionOnly = true;
-      setEnabled(true, false);
-    }
+    applyState();
   });
 })();

@@ -46,12 +46,33 @@
       <div class="row row-divided">
         <div>
           <h2>Match system dark mode</h2>
-          <p class="hint">Automatically turn on dark mode on any site when your OS is in dark mode. Press the shortcut to override it for the page you're on — that override only applies there, not remembered for the site.</p>
+          <p class="hint">Automatically match dark mode on any site to your OS setting. While this is on, the shortcut and popup toggle are disabled — every page just follows the OS preference.</p>
         </div>
         <label class="switch">
           <input type="checkbox" id="autoMatchToggle" />
           <span class="switch-track"><span class="switch-thumb"></span></span>
         </label>
+      </div>
+
+      <div class="row row-divided">
+        <div>
+          <h2>Scheduled dark mode</h2>
+          <p class="hint">Automatically switch to dark mode during a daily time range. Mutually exclusive with "Match system dark mode."</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="scheduleToggle" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </label>
+      </div>
+      <div id="scheduleFields" class="schedule-fields" hidden>
+        <div class="schedule-field">
+          <span class="schedule-label">From</span>
+          <input type="time" id="scheduleFrom" class="time-input" value="20:00" />
+        </div>
+        <div class="schedule-field">
+          <span class="schedule-label">To</span>
+          <input type="time" id="scheduleTo" class="time-input" value="08:00" />
+        </div>
       </div>
     </section>
 
@@ -72,6 +93,9 @@
     <p id="savedMsg" class="saved-msg" hidden>Saved</p>
   </main>
   <script src="shortcut-utils.js"></script>
+  <script src="schedule-utils.js"></script>
+  <script src="broadcast-utils.js"></script>
+  <script src="auto-modes-ui.js"></script>
   <script src="options.js"></script>
 </body>
 </html>

@@ -7,6 +7,7 @@
   --accent-off: #45454f;
   --border: #333340;
   --danger: #ff6b6b;
+  color-scheme: dark;
 }
 
 * {
@@ -158,6 +159,7 @@ body {
   position: relative;
   display: inline-block;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .switch input {
@@ -196,6 +198,52 @@ body {
 
 .switch input:checked + .switch-track .switch-thumb {
   transform: translateX(18px);
+}
+
+.switch input:disabled + .switch-track {
+  opacity: 0.4;
+}
+
+.switch:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+.schedule-fields {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.schedule-fields[hidden] {
+  display: none;
+}
+
+.schedule-field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.schedule-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.time-input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
 }
 
 .secondary-btn {
