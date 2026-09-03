@@ -73,9 +73,35 @@
       siteList.innerHTML = '';
       for (const origin of origins.sort()) {
         const li = document.createElement('li');
-        li.textContent = origin;
+        li.className = 'site-list-item';
+
+        const label = document.createElement('span');
+        label.className = 'site-list-origin';
+        label.textContent = origin;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'site-delete-btn';
+        deleteBtn.dataset.origin = origin;
+        deleteBtn.title = `Forget ${origin}`;
+        deleteBtn.setAttribute('aria-label', `Forget ${origin}`);
+        deleteBtn.textContent = '×';
+
+        li.appendChild(label);
+        li.appendChild(deleteBtn);
         siteList.appendChild(li);
       }
+    });
+  }
+
+  function deleteSite(origin) {
+    chrome.storage.local.get('sites', (data) => {
+      const sites = (data && data.sites) || {};
+      delete sites[origin];
+      chrome.storage.local.set({ sites }, () => {
+        refreshSiteCount();
+        showSaved();
+      });
     });
   }
 
@@ -159,6 +185,12 @@
     sitesVisible = !sitesVisible;
     siteList.hidden = !sitesVisible;
     toggleSitesBtn.textContent = sitesVisible ? 'Hide sites' : 'Show sites';
+  });
+
+  siteList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.site-delete-btn');
+    if (!btn) return;
+    deleteSite(btn.dataset.origin);
   });
 
   clearSitesBtn.addEventListener('click', () => {

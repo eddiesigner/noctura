@@ -18,21 +18,42 @@ technique:
 html {
   filter: invert(1) hue-rotate(180deg);
 }
-img, video, iframe, picture, canvas, svg, embed, object, [style*="background-image"] {
+img, video, iframe, canvas, embed, object, [style*="background-image"] {
   filter: invert(1) hue-rotate(180deg); /* inverted again = back to normal */
 }
 ```
 
 Inverting the whole page flips light backgrounds to dark and dark text to
-light. Media elements get the same filter applied a second time, which
-cancels the effect out and keeps photos, video, and icons looking normal.
+light. Photo/video-like elements get the same filter applied a second time,
+which cancels the effect out and keeps them looking normal. Inline `<svg>`
+is deliberately left inverting along with the page instead — most inline
+SVGs on the web are simple, flat-colored icons and logos (not photos), and
+those look right when they flip along with the surrounding text, the same
+way a black icon should turn white on a dark background. `<img src="x.svg">`
+and SVGs used via a CSS `background-image` still count as photo-like and
+stay un-inverted, since only the bare `svg` tag was excluded.
 
-**Known limitation:** this technique can't detect CSS background images
-declared in stylesheets (only inline `style="background-image:..."`), so a
-small number of sites with photo backgrounds set via CSS classes may look
-inverted in those specific spots. This is an inherent tradeoff of the
-filter-based approach (used by most lightweight dark mode extensions) and
-avoids the complexity/fragility of a full per-site theming engine.
+**Known limitations:**
+- This technique can't detect CSS background images declared in
+  stylesheets (only inline `style="background-image:..."`), so a small
+  number of sites with photo backgrounds set via CSS classes may look
+  inverted in those specific spots.
+- If one of the un-inverted tags is nested inside another one from that
+  same list, the filter applies twice and cancels back out to inverted.
+  `<picture>` is deliberately left out of the list for exactly this reason
+  (it's a non-rendering wrapper around an `<img>`/`<source>`, which are
+  already covered on their own). The same could theoretically happen with
+  `<object>`/`<embed>` fallback content nesting another listed tag, though
+  that's rare in practice.
+- A colorful/photographic inline `<svg>` (rare, but it happens — e.g. a
+  detailed illustration or a flag) will invert along with the page instead
+  of staying color-accurate, since inline SVGs are treated as icon-like by
+  default. There's no reliable way to tell "icon" and "photographic SVG"
+  apart from CSS alone.
+
+Both are inherent tradeoffs of the filter-based approach (used by most
+lightweight dark mode extensions) and avoid the complexity/fragility of a
+full per-site theming engine.
 
 ## Project structure
 

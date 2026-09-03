@@ -19,7 +19,7 @@
       filter: invert(1) hue-rotate(180deg) !important;
       background-color: #fff !important;
     }
-    img, video, iframe, picture, canvas, svg, embed, object,
+    img, video, iframe, canvas, embed, object,
     video source,
     [style*="background-image"] {
       filter: invert(1) hue-rotate(180deg) !important;
