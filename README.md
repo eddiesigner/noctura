@@ -57,31 +57,73 @@ full per-site theming engine.
 
 ## Project structure
 
+Built with [WXT](https://wxt.dev/) (Vite-based) + Vue 3 + TypeScript. WXT
+generates the right manifest per browser target from one codebase — no more
+hand-maintained `manifest.json`/`manifest-firefox.json` pair.
+
 ```
-manifest.json           Chrome / Arc / Edge (Manifest V3)
-manifest-firefox.json    Firefox variant (Manifest V3)
-background.js            Seeds default settings; manages the schedule alarm
-content.js                Applies/removes the dark styles, handles the shortcut, persists per-site state
-popup.html/css/js        Toolbar popup: on/off toggle for the current site, plus the automatic-mode switches
-options.html/css/js      Settings: shortcut recorder, remembered sites, the automatic-mode switches
-shortcut-utils.js         Shared: keyboard shortcut matching/formatting
-schedule-utils.js         Shared: "is now within the scheduled range" logic
-broadcast-utils.js        Shared: live-apply a settings change to every open tab
-auto-modes-ui.js          Shared: wires up Remember/Match-system/Scheduled and their mutual exclusion
-icons/                    Toolbar icon (16/32/48/128px)
+wxt.config.ts             Manifest fields (name, permissions, Firefox gecko id, ...)
+entrypoints/
+  background.ts            Manages the chrome.alarms-based schedule check
+  content.ts                Applies/removes the dark styles, handles the shortcut/messages
+  popup/                    Toolbar popup (Vue): on/off toggle + the automatic-mode switches
+  options/                  Settings page (Vue): shortcut recorder, remembered sites, automatic-mode switches
+composables/
+  useAutoModes.ts            Remember/Match-system/Scheduled state + their mutual exclusion (shared by popup & options)
+  usePageToggle.ts           Popup's per-tab on/off toggle (live state, lock handling)
+  useShortcutRecorder.ts     Options' shortcut-recording UI
+  useRememberedSites.ts      Options' remembered-sites list
+utils/
+  settings.ts                Settings type + typed storage items (wxt/storage)
+  schedule.ts                 "Is now within the scheduled range" logic
+  shortcut.ts                 Keyboard shortcut matching/formatting
+components/                 Shared presentational Vue components (switch, time-range fields)
+public/icon/                Toolbar icon (16/32/48/128px), copied as-is into every build
 ```
 
-Plain HTML/CSS/JS, no build step — this keeps it portable across browsers.
+Settings changes propagate via `wxt/storage`'s `.watch()`, which fires in
+every context (content script, popup, options, background) whenever the
+value changes — regardless of who changed it. There's no manual
+"broadcast to every tab" step for that; the one place a message is still
+sent proactively is the background alarm nudging tabs to recheck the
+schedule, since that's a time passing, not a settings change.
 
-## Load it locally in Arc (or Chrome)
+## Local development
 
-Arc is Chromium-based and loads unpacked extensions the same way Chrome does:
+```bash
+npm install
+npm run dev            # Chrome/Arc-compatible dev build, auto-reloading
+npm run dev:firefox    # Same, targeting Firefox
+npm run compile        # Type-check only (vue-tsc), no build output
+```
+
+`wxt` in dev mode can auto-launch a dedicated test browser profile with the
+extension already loaded (see [WXT's browser startup
+docs](https://wxt.dev/guide/essentials/config/browser-startup.html) to point
+it at a specific Chrome/Chromium binary). For loading into **Arc**
+specifically — not something WXT can auto-launch — build once and load it
+unpacked instead:
+
+```bash
+npm run build
+```
 
 1. Open `arc://extensions` (or `chrome://extensions` in Chrome).
 2. Turn on **Developer Mode** (toggle, top right).
 3. Click **Load unpacked**.
-4. Select this folder: `/Users/lalo/Code/Personal/noctura`.
+4. Select the `output/chrome-mv3` folder produced by the build (not the
+   project root — that's the compiled extension WXT generates).
 5. Pin the "Noctura" icon to the toolbar if you'd like quick access.
+
+For active development, use `npm run dev` instead of `npm run build` — it
+outputs to `output/chrome-mv3-dev` (a separate folder from the production
+`chrome-mv3` build, so load that one in step 4 above instead). Its build
+has a WebSocket client baked into the background script that connects back
+to the dev server, so after loading it into Arc once, most code changes
+auto-reload the extension by themselves — no need to keep re-clicking
+"Load unpacked". A manual reload is still occasionally needed for changes
+the extension can't apply to itself, like editing `wxt.config.ts`'s
+`permissions`.
 
 Test it:
 - Visit any regular website (not a `chrome://` page).
@@ -98,31 +140,24 @@ Test it:
 
 ## Firefox
 
-Firefox needs the manifest file to literally be named `manifest.json`, so use
-a copy of the folder with the Firefox variant swapped in:
-
 ```bash
-cp -R noctura noctura-firefox
-cd noctura-firefox
-mv manifest.json manifest-chrome.json
-mv manifest-firefox.json manifest.json
+npm run build:firefox
+npm run zip:firefox   # produces output/noctura-<version>-firefox.zip
 ```
 
-Then in Firefox:
 1. Go to `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…**.
-3. Select `manifest.json` inside `noctura-firefox`.
+3. Select `manifest.json` inside `output/firefox-mv2`.
 
-(Temporary add-ons are removed when Firefox restarts; for a persistent
-install you'd package and sign it via addons.mozilla.org.)
+(Temporary add-ons are removed when Firefox restarts. For a persistent
+install, submit the zip from `npm run zip:firefox` to
+addons.mozilla.org — signed builds can then be installed permanently.)
 
 ## Safari
 
-Safari runs Web Extensions but requires converting the project into an Xcode
-project first:
-
 ```bash
-xcrun safari-web-extension-converter /Users/lalo/Code/Personal/noctura
+npm run build:safari
+xcrun safari-web-extension-converter output/safari-mv2
 ```
 
 This opens Xcode with a generated app+extension target. Build and run the app
@@ -130,6 +165,16 @@ once, then enable the extension in Safari's **Settings → Extensions** (and,
 on first run, allow unsigned extensions via **Develop → Allow Unsigned
 Extensions** if you're on a non-App Store build). Requires Xcode and an Apple
 Developer account for anything beyond local testing/distribution.
+
+## Preparing for the stores
+
+```bash
+npm run zip            # output/noctura-<version>-chrome.zip, for the Chrome Web Store
+npm run zip:firefox    # output/noctura-<version>-firefox.zip, for addons.mozilla.org
+```
+
+Bump `version` in `package.json` before each release — WXT reads it
+directly into the generated manifest.
 
 ## Match system dark mode
 
