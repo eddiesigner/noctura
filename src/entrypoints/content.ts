@@ -1,26 +1,31 @@
 import { matchesShortcut } from '@/utils/shortcut';
 import { isWithinSchedule, normalizeSchedule } from '@/utils/schedule';
 import { settingsStorage, sitesStorage, type Settings } from '@/utils/settings';
+import { getThemeFilter, REVERSIBLE_FILTER, type ThemeId } from '@/utils/theme';
 
 const STYLE_ID = '__noctura-style__';
 
-// Applies an invert-filter based dark theme, on demand only. Photo/video-like
-// elements get the same filter applied a second time, canceling it back out.
+// Applies a filter-based dark theme, on demand only. Photo/video-like
+// elements get the reversible part of the filter applied a second time,
+// canceling it back out (see utils/theme.ts for why only that part is
+// reversible — grayscale/sepia themes still tint media, by design).
 // Inline <svg> is intentionally left out: most inline SVGs are flat icons,
 // which look right flipping with the page like text does. <picture> is also
 // left out: it's a non-rendering wrapper around <img>/<source>, and matching
 // both it and its child would cancel the un-invert back out to inverted.
-const DARK_MODE_CSS = `
-  html {
-    filter: invert(1) hue-rotate(180deg) !important;
-    background-color: #fff !important;
-  }
-  img, video, iframe, canvas, embed, object,
-  video source,
-  [style*="background-image"] {
-    filter: invert(1) hue-rotate(180deg) !important;
-  }
-`;
+function buildDarkModeCss(theme: ThemeId | undefined): string {
+  return `
+    html {
+      filter: ${getThemeFilter(theme)} !important;
+      background-color: #fff !important;
+    }
+    img, video, iframe, canvas, embed, object,
+    video source,
+    [style*="background-image"] {
+      filter: ${REVERSIBLE_FILTER} !important;
+    }
+  `;
+}
 
 type RuntimeMessage =
   | { type: 'TOGGLE' }
@@ -48,11 +53,15 @@ export default defineContentScript({
     }
 
     function applyStyle() {
-      if (document.getElementById(STYLE_ID)) return;
-      const style = document.createElement('style');
-      style.id = STYLE_ID;
-      style.textContent = DARK_MODE_CSS;
-      (document.head || document.documentElement).appendChild(style);
+      let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
+      if (!style) {
+        style = document.createElement('style');
+        style.id = STYLE_ID;
+        (document.head || document.documentElement).appendChild(style);
+      }
+      // Always refresh (not just on creation) so switching themes while
+      // dark mode is already on takes effect immediately.
+      style.textContent = buildDarkModeCss(settings.theme);
     }
 
     function removeStyle() {

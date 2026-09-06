@@ -6,6 +6,9 @@ export default defineConfig({
   // default, which makes "Load unpacked" in Arc/Chrome annoying to point at
   // it. A plain, visible folder name avoids that friction.
   outDir: 'output',
+  // Keeps all source code (entrypoints/, components/, composables/, utils/,
+  // assets/) together under src/, separate from config files at the root.
+  srcDir: 'src',
   modules: ['@wxt-dev/module-vue'],
   manifest: {
     name: 'Noctura',

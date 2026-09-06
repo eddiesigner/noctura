@@ -2,10 +2,13 @@
 import { ref, computed, onMounted } from 'vue';
 import ToggleSwitch from '@/components/ToggleSwitch.vue';
 import ScheduleFields from '@/components/ScheduleFields.vue';
+import ThemeSwatch from '@/components/ThemeSwatch.vue';
 import { useAutoModes } from '@/composables/useAutoModes';
 import { useShortcutRecorder } from '@/composables/useShortcutRecorder';
 import { useRememberedSites } from '@/composables/useRememberedSites';
+import { useTheme } from '@/composables/useTheme';
 import { settingsStorage, sitesStorage } from '@/utils/settings';
+import { THEME_PRESETS } from '@/utils/theme';
 
 const {
   autoMatchOn,
@@ -26,6 +29,8 @@ const { recording, label: shortcutLabel, error: shortcutError, startRecording, s
   useShortcutRecorder();
 
 const { origins, visible: sitesVisible, toggleVisible, deleteSite, clearAll } = useRememberedSites();
+
+const { theme, setTheme } = useTheme();
 
 const siteCountText = computed(() =>
   origins.value.length === 1 ? '1 site currently remembered.' : `${origins.value.length} sites currently remembered.`,
@@ -78,6 +83,20 @@ onMounted(() => {
           @blur="stopRecording"
         >{{ recording ? 'Press a key combination…' : shortcutLabel }}</button>
         <p v-if="shortcutError" class="error">{{ shortcutError }}</p>
+      </section>
+
+      <section class="section">
+        <h2>Theme</h2>
+        <p class="hint">Choose the color style dark mode uses. Classic leaves photos and videos untouched; Grayscale and Sepia tint them along with the rest of the page.</p>
+        <div class="theme-grid">
+          <ThemeSwatch
+            v-for="preset in THEME_PRESETS"
+            :key="preset.id"
+            :preset="preset"
+            :selected="theme === preset.id"
+            @select="setTheme(preset.id)"
+          />
+        </div>
       </section>
 
       <section class="section">
@@ -174,7 +193,7 @@ onMounted(() => {
   max-width: 420px;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 24px;
 }
 
 .header {
@@ -202,7 +221,7 @@ onMounted(() => {
 }
 
 .subtitle {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   font-size: 12px;
   color: var(--text-muted);
 }
@@ -211,8 +230,8 @@ onMounted(() => {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 4px;
+  padding: 8px 12px;
   border-radius: 999px;
   border: 1px solid var(--accent);
   background: rgba(124, 139, 255, 0.12);
@@ -247,10 +266,15 @@ onMounted(() => {
 }
 
 .hint {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-size: 12px;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+.theme-grid {
+  display: flex;
+  gap: 8px;
 }
 
 .row {
@@ -309,7 +333,7 @@ onMounted(() => {
 }
 
 .secondary-btn {
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);
@@ -342,7 +366,7 @@ onMounted(() => {
   border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   max-height: 160px;
   overflow-y: auto;
 }

@@ -62,23 +62,28 @@ generates the right manifest per browser target from one codebase — no more
 hand-maintained `manifest.json`/`manifest-firefox.json` pair.
 
 ```
-wxt.config.ts             Manifest fields (name, permissions, Firefox gecko id, ...)
-entrypoints/
-  background.ts            Manages the chrome.alarms-based schedule check
-  content.ts                Applies/removes the dark styles, handles the shortcut/messages
-  popup/                    Toolbar popup (Vue): on/off toggle + the automatic-mode switches
-  options/                  Settings page (Vue): shortcut recorder, remembered sites, automatic-mode switches
-composables/
-  useAutoModes.ts            Remember/Match-system/Scheduled state + their mutual exclusion (shared by popup & options)
-  usePageToggle.ts           Popup's per-tab on/off toggle (live state, lock handling)
-  useShortcutRecorder.ts     Options' shortcut-recording UI
-  useRememberedSites.ts      Options' remembered-sites list
-utils/
-  settings.ts                Settings type + typed storage items (wxt/storage)
-  schedule.ts                 "Is now within the scheduled range" logic
-  shortcut.ts                 Keyboard shortcut matching/formatting
-components/                 Shared presentational Vue components (switch, time-range fields)
-public/icon/                Toolbar icon (16/32/48/128px), copied as-is into every build
+wxt.config.ts               Manifest fields, srcDir/outDir (name, permissions, Firefox gecko id, ...)
+src/
+  entrypoints/
+    background.ts            Manages the chrome.alarms-based schedule check
+    content.ts                Applies/removes the dark styles, handles the shortcut/messages
+    popup/                    Toolbar popup (Vue): on/off toggle + the automatic-mode switches + theme picker
+    options/                  Settings page (Vue): shortcut recorder, remembered sites, automatic-mode switches
+  composables/
+    useAutoModes.ts            Remember/Match-system/Scheduled state + their mutual exclusion (shared by popup & options)
+    usePageToggle.ts           Popup's per-tab on/off toggle (live state, lock handling)
+    useShortcutRecorder.ts     Options' shortcut-recording UI
+    useRememberedSites.ts      Options' remembered-sites list
+    useTheme.ts                Theme selection (shared by popup & options)
+  utils/
+    settings.ts                Settings type + typed storage items (wxt/storage)
+    schedule.ts                 "Is now within the scheduled range" logic
+    shortcut.ts                 Keyboard shortcut matching/formatting
+    theme.ts                    Theme presets (Classic/Grayscale/Sepia) and their filter recipes
+  components/                 Shared presentational Vue components (switch, time-range fields, theme swatch)
+  assets/                      Shared CSS (theme variables, base styles)
+public/icon/                  Toolbar icon (16/32/48/128px), copied as-is into every build (not under src/ —
+                               WXT always resolves publicDir from the project root, regardless of srcDir)
 ```
 
 Settings changes propagate via `wxt/storage`'s `.watch()`, which fires in
@@ -199,6 +204,22 @@ that runs once a minute while this is on — so there can be up to about a
 minute of lag between the clock hitting your chosen time and the page
 actually flipping, and a tab that's been discarded/backgrounded will just
 catch up next time it's focused or reloaded.
+
+## Theme
+
+Settings has a "Theme" picker (Classic / Grayscale / Sepia) with a live
+preview swatch per option — each swatch has the actual theme's CSS `filter`
+applied to a small mock page (text lines, an accent color, a photo square),
+so it shows exactly how that theme renders, not just a label. This choice
+is orthogonal to how dark mode gets turned on — it only changes the color
+recipe used whenever dark mode is active, regardless of trigger.
+
+Classic keeps photos/videos untouched, same as always. Grayscale and Sepia
+add `grayscale()`/`sepia()` on top of the same base — and since those
+aren't reversible the way invert+hue-rotate is, media elements can't cancel
+them back out, so photos and videos pick up the same tint as the rest of
+the page in those two themes. That matches how similar modes work in most
+other dark mode extensions.
 
 ## Notes on the keyboard shortcut
 

@@ -1,12 +1,14 @@
 import { storage } from 'wxt/utils/storage';
 import { DEFAULT_SCHEDULE, type ScheduleConfig } from './schedule';
 import { DEFAULT_SHORTCUT, type ShortcutConfig } from './shortcut';
+import { DEFAULT_THEME, type ThemeId } from './theme';
 
 export interface Settings {
   rememberPerSite: boolean;
   autoMatchSystemDarkMode: boolean;
   scheduledDarkMode: ScheduleConfig;
   shortcut: ShortcutConfig;
+  theme: ThemeId;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -14,6 +16,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoMatchSystemDarkMode: false,
   scheduledDarkMode: DEFAULT_SCHEDULE,
   shortcut: DEFAULT_SHORTCUT,
+  theme: DEFAULT_THEME,
 };
 
 // A single stored object (rather than one storage item per field) so a

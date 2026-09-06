@@ -32,7 +32,8 @@ function onToChange(e: Event) {
 <style scoped>
 .schedule-fields {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .schedule-fields[hidden] {
@@ -56,7 +57,7 @@ function onToChange(e: Event) {
 
 .time-input {
   width: 100%;
-  padding: 7px 8px;
+  padding: 8px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--bg);

@@ -2,10 +2,13 @@
 import { computed } from 'vue';
 import ToggleSwitch from '@/components/ToggleSwitch.vue';
 import ScheduleFields from '@/components/ScheduleFields.vue';
+import ThemeSwatch from '@/components/ThemeSwatch.vue';
 import { useAutoModes } from '@/composables/useAutoModes';
 import { usePageToggle } from '@/composables/usePageToggle';
+import { useTheme } from '@/composables/useTheme';
 import { settingsStorage } from '@/utils/settings';
 import { formatShortcut, isMacPlatform, DEFAULT_SHORTCUT } from '@/utils/shortcut';
+import { THEME_PRESETS } from '@/utils/theme';
 import { ref, onMounted } from 'vue';
 
 const {
@@ -21,6 +24,8 @@ const {
 } = useAutoModes();
 
 const { hostname, enabled, locked, statusMessage, toggle } = usePageToggle();
+
+const { theme, setTheme } = useTheme();
 
 const toggleDisabled = computed(() => locked.value);
 
@@ -86,6 +91,19 @@ function openSettings() {
       @change="setScheduleTimes"
     />
 
+    <div class="theme-block">
+      <span class="block-label">Theme</span>
+      <div class="theme-grid">
+        <ThemeSwatch
+          v-for="preset in THEME_PRESETS"
+          :key="preset.id"
+          :preset="preset"
+          :selected="theme === preset.id"
+          @select="setTheme(preset.id)"
+        />
+      </div>
+    </div>
+
     <footer class="footer">
       <span class="shortcut-hint">{{ shortcutHint }}</span>
       <button class="link-btn" type="button" @click="openSettings">Settings</button>
@@ -95,11 +113,11 @@ function openSettings() {
 
 <style scoped>
 .card {
-  width: 260px;
+  width: 320px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .header {
@@ -123,11 +141,11 @@ function openSettings() {
 .site-row {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 12px;
 }
 
 .site-label {
@@ -150,7 +168,7 @@ function openSettings() {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  padding: 10px 14px;
+  padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--bg-elevated);
@@ -207,18 +225,18 @@ function openSettings() {
   font-size: 12px;
   color: var(--text-muted);
   text-align: center;
-  margin: -6px 0 0;
+  margin: -8px 0 0;
 }
 
 .setting-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 10px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   cursor: pointer;
   transition: border-color 0.15s ease;
 }
@@ -240,11 +258,29 @@ function openSettings() {
   font-weight: 500;
 }
 
+.theme-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.block-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.theme-grid {
+  display: flex;
+  gap: 8px;
+}
+
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 6px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
 }
 
@@ -254,7 +290,7 @@ function openSettings() {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 3px 6px;
+  padding: 4px;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
