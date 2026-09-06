@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import ToggleSwitch from '@/components/ToggleSwitch.vue';
 import ScheduleFields from '@/components/ScheduleFields.vue';
 import ThemeSwatch from '@/components/ThemeSwatch.vue';
@@ -23,11 +22,9 @@ const {
   setScheduleTimes,
 } = useAutoModes();
 
-const { hostname, enabled, locked, statusMessage, toggle } = usePageToggle();
+const { hostname, enabled, overridden, statusMessage, toggle, clearOverride } = usePageToggle();
 
 const { theme, setTheme } = useTheme();
-
-const toggleDisabled = computed(() => locked.value);
 
 const shortcutHint = ref('⌥ D');
 onMounted(async () => {
@@ -56,7 +53,6 @@ function openSettings() {
       class="toggle"
       type="button"
       :aria-pressed="enabled"
-      :disabled="toggleDisabled"
       @click="toggle"
     >
       <span class="toggle-track">
@@ -65,7 +61,11 @@ function openSettings() {
       <span class="toggle-text">{{ enabled ? 'Dark mode on' : 'Dark mode off' }}</span>
     </button>
 
-    <p v-if="statusMessage" class="status-msg">{{ statusMessage }}</p>
+    <p v-if="overridden" class="status-msg">
+      Overriding automatic mode for this site.
+      <button class="link-btn" type="button" @click="clearOverride">Reset to automatic</button>
+    </p>
+    <p v-else-if="statusMessage" class="status-msg">{{ statusMessage }}</p>
 
     <label class="setting-row" :class="{ disabled: autoMatchDisabled }">
       <span class="setting-label">Match system dark mode</span>
@@ -181,11 +181,6 @@ function openSettings() {
 
 .toggle:hover {
   border-color: var(--accent);
-}
-
-.toggle:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
 }
 
 .toggle-track {

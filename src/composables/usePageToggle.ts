@@ -2,34 +2,32 @@ import { ref, onMounted } from 'vue';
 import { settingsStorage, sitesStorage, type Settings } from '@/utils/settings';
 import { normalizeSchedule, isWithinSchedule } from '@/utils/schedule';
 
-const LOCKED_MSG = 'Dark mode is controlled automatically by one of the settings below.';
-
 // Drives the popup's main on/off toggle for the active tab: fetches its
-// live state from the content script, locks it out while an automatic mode
-// owns the page, and keeps an instant local preview in sync with settings
-// changes made in this popup or the Settings page.
+// live state from the content script and keeps an instant local preview in
+// sync with settings changes made in this popup or the Settings page. The
+// toggle always works, even while an automatic mode governs dark mode
+// elsewhere — it just creates (or updates) a sticky per-site override,
+// reflected here via `overridden`.
 export function usePageToggle() {
   const hostname = ref('');
   const enabled = ref(false);
-  const locked = ref(false);
+  const overridden = ref(false);
   const available = ref(false);
   const statusMessage = ref('');
 
   let tabId: number | undefined;
   let tabOrigin: string | null = null;
-
-  function refreshLockMessage() {
-    statusMessage.value = locked.value ? LOCKED_MSG : '';
-  }
+  let lastSettings: Settings | undefined;
 
   async function previewFromSettings(settings: Settings) {
+    lastSettings = settings;
     const schedule = normalizeSchedule(settings.scheduledDarkMode);
-    locked.value = settings.autoMatchSystemDarkMode || schedule.enabled;
-    refreshLockMessage();
+    const autoActive = settings.autoMatchSystemDarkMode || schedule.enabled;
 
     if (!available.value) return; // let the initial GET_STATE own the first paint
 
-    if (!locked.value) {
+    if (!autoActive) {
+      overridden.value = false;
       if (tabOrigin) {
         const sites = await sitesStorage.getValue();
         enabled.value = !!(settings.rememberPerSite && sites[tabOrigin]);
@@ -37,6 +35,16 @@ export function usePageToggle() {
       return;
     }
 
+    if (tabOrigin) {
+      const sites = await sitesStorage.getValue();
+      if (tabOrigin in sites) {
+        overridden.value = true;
+        enabled.value = !!sites[tabOrigin];
+        return;
+      }
+    }
+
+    overridden.value = false;
     if (schedule.enabled) {
       enabled.value = isWithinSchedule(schedule);
     } else {
@@ -46,11 +54,12 @@ export function usePageToggle() {
 
   onMounted(async () => {
     const settings = await settingsStorage.getValue();
-    const schedule = normalizeSchedule(settings.scheduledDarkMode);
-    locked.value = settings.autoMatchSystemDarkMode || schedule.enabled;
-    refreshLockMessage();
+    lastSettings = settings;
 
     settingsStorage.watch((next) => void previewFromSettings(next));
+    sitesStorage.watch(() => {
+      if (lastSettings) void previewFromSettings(lastSettings);
+    });
 
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (!tab?.id) {
@@ -76,21 +85,33 @@ export function usePageToggle() {
       const response = await browser.tabs.sendMessage(tabId, { type: 'GET_STATE' });
       available.value = true;
       enabled.value = !!response?.enabled;
-      refreshLockMessage();
+      overridden.value = !!response?.overridden;
     } catch {
       statusMessage.value = 'Reload the page to use Noctura here.';
     }
   });
 
   async function toggle() {
-    if (locked.value || !tabId) return;
+    if (!tabId) return;
     try {
       const response = await browser.tabs.sendMessage(tabId, { type: 'TOGGLE' });
       enabled.value = !!response?.enabled;
+      overridden.value = !!response?.overridden;
     } catch {
       // Tab navigated away or lost its content script; nothing to do.
     }
   }
 
-  return { hostname, enabled, locked, available, statusMessage, toggle };
+  async function clearOverride() {
+    if (!tabId) return;
+    try {
+      const response = await browser.tabs.sendMessage(tabId, { type: 'CLEAR_OVERRIDE' });
+      enabled.value = !!response?.enabled;
+      overridden.value = !!response?.overridden;
+    } catch {
+      // Tab navigated away or lost its content script; nothing to do.
+    }
+  }
+
+  return { hostname, enabled, overridden, available, statusMessage, toggle, clearOverride };
 }

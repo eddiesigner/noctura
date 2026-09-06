@@ -117,7 +117,7 @@ onMounted(() => {
         <div class="row row-divided">
           <div>
             <h2>Match system dark mode</h2>
-            <p class="hint">Automatically match dark mode on any site to your OS setting. While this is on, the shortcut and popup toggle are disabled — every page just follows the OS preference.</p>
+            <p class="hint">Automatically match dark mode on any site to your OS setting. Toggle a specific site to override it — see Remembered sites below.</p>
           </div>
           <label class="switch-label" :class="{ disabled: autoMatchDisabled }">
             <ToggleSwitch
@@ -131,7 +131,7 @@ onMounted(() => {
         <div class="row row-divided">
           <div>
             <h2>Scheduled dark mode</h2>
-            <p class="hint">Automatically switch to dark mode during a daily time range. Mutually exclusive with "Match system dark mode."</p>
+            <p class="hint">Automatically switch to dark mode during a daily time range. Mutually exclusive with "Match system dark mode." Toggle a specific site to override it — see Remembered sites below.</p>
           </div>
           <label class="switch-label" :class="{ disabled: scheduleDisabled }">
             <ToggleSwitch
@@ -150,11 +150,10 @@ onMounted(() => {
       </section>
 
       <section class="section">
-        <div class="row">
-          <div>
-            <h2>Remembered sites</h2>
-            <p class="hint">{{ siteCountText }}</p>
-          </div>
+        <h2>Remembered sites</h2>
+        <p class="hint">Your on/off choice for these sites always applies, even overriding the automatic modes above.</p>
+        <div class="row site-actions">
+          <p class="hint site-count">{{ siteCountText }}</p>
           <div v-if="origins.length" class="button-group">
             <button class="secondary-btn neutral" type="button" @click="toggleVisible">
               {{ sitesVisible ? 'Hide sites' : 'Show sites' }}
@@ -351,6 +350,14 @@ onMounted(() => {
 .secondary-btn.neutral:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.site-actions {
+  margin-top: 8px;
+}
+
+.site-count {
+  white-space: nowrap;
 }
 
 .button-group {

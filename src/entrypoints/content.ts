@@ -30,6 +30,7 @@ function buildDarkModeCss(theme: ThemeId | undefined): string {
 type RuntimeMessage =
   | { type: 'TOGGLE' }
   | { type: 'GET_STATE' }
+  | { type: 'CLEAR_OVERRIDE' }
   | { type: 'RECHECK_SCHEDULE' };
 
 export default defineContentScript({
@@ -68,13 +69,39 @@ export default defineContentScript({
       document.getElementById(STYLE_ID)?.remove();
     }
 
-    async function persistState() {
-      if (!settings.rememberPerSite || !origin) return;
+    function autoModeActive(): boolean {
+      const schedule = normalizeSchedule(settings.scheduledDarkMode);
+      return settings.autoMatchSystemDarkMode || schedule.enabled;
+    }
+
+    // An automatic mode governs every site by default, but a manual toggle
+    // for one particular site always wins over it — that per-site choice is
+    // what's stored here, keyed by origin. Outside of an automatic mode this
+    // map instead holds the "remember per website" preference, so a manual
+    // toggle only persists there when that setting is on.
+    async function isOverridden(): Promise<boolean> {
+      if (!origin || !autoModeActive()) return false;
       const sites = await sitesStorage.getValue();
-      if (enabled) {
-        sites[origin] = true;
+      return origin in sites;
+    }
+
+    async function persistState() {
+      if (!origin) return;
+      const sites = await sitesStorage.getValue();
+      if (autoModeActive()) {
+        // Override must be storable as explicit false too, so an
+        // "automatic says dark, but I want this site light" choice sticks —
+        // a deleted entry would just mean "no override" and fall back to
+        // the automatic mode again.
+        sites[origin] = enabled;
+      } else if (settings.rememberPerSite) {
+        if (enabled) {
+          sites[origin] = true;
+        } else {
+          delete sites[origin];
+        }
       } else {
-        delete sites[origin];
+        return;
       }
       await sitesStorage.setValue(sites);
     }
@@ -86,29 +113,32 @@ export default defineContentScript({
       } else {
         removeStyle();
       }
-      if (persist) void persistState();
+      return persist ? persistState() : Promise.resolve();
     }
 
-    function autoModeActive(): boolean {
-      const schedule = normalizeSchedule(settings.scheduledDarkMode);
-      return settings.autoMatchSystemDarkMode || schedule.enabled;
-    }
-
-    // While either automatic mode is on, it's the sole authority over this
-    // page's dark mode — manual toggling (shortcut or popup) is a no-op so
-    // the page always reflects that mode, with no per-page override.
-    function toggle(): boolean {
-      if (autoModeActive()) return enabled;
-      setEnabled(!enabled);
+    // Manual toggling (shortcut or popup) always applies, even while an
+    // automatic mode is on — it just creates or updates a sticky per-site
+    // override (see persistState) rather than changing the automatic mode
+    // itself, which keeps governing every other site.
+    async function toggle(): Promise<boolean> {
+      await setEnabled(!enabled);
       return enabled;
     }
 
     // Recomputes and (re)applies dark mode from the current settings —
     // used on load, whenever settings change, and on the periodic schedule
     // recheck, so every trigger takes effect immediately without a reload.
-    // Scheduled mode takes priority since the UI keeps it mutually
-    // exclusive with auto-match, but both can't be on at once.
+    // A per-site override, if any, wins over the automatic modes; scheduled
+    // mode then takes priority over auto-match since the UI keeps them
+    // mutually exclusive.
     async function applyState() {
+      if (autoModeActive() && origin) {
+        const sites = await sitesStorage.getValue();
+        if (origin in sites) {
+          setEnabled(!!sites[origin], false);
+          return;
+        }
+      }
       const schedule = normalizeSchedule(settings.scheduledDarkMode);
       if (schedule.enabled) {
         setEnabled(isWithinSchedule(schedule), false);
@@ -126,13 +156,22 @@ export default defineContentScript({
       setEnabled(!!sites[origin], false);
     }
 
+    async function clearOverride() {
+      if (origin) {
+        const sites = await sitesStorage.getValue();
+        delete sites[origin];
+        await sitesStorage.setValue(sites);
+      }
+      await applyState();
+    }
+
     document.addEventListener(
       'keydown',
       (e) => {
         if (matchesShortcut(e, settings.shortcut)) {
           e.preventDefault();
           e.stopPropagation();
-          toggle();
+          void toggle();
         }
       },
       true,
@@ -141,9 +180,17 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((msg: RuntimeMessage) => {
       switch (msg?.type) {
         case 'TOGGLE':
-          return Promise.resolve({ enabled: toggle() });
+          return (async () => {
+            await toggle();
+            return { enabled, overridden: await isOverridden() };
+          })();
         case 'GET_STATE':
-          return Promise.resolve({ enabled });
+          return (async () => ({ enabled, overridden: await isOverridden() }))();
+        case 'CLEAR_OVERRIDE':
+          return (async () => {
+            await clearOverride();
+            return { enabled, overridden: await isOverridden() };
+          })();
         case 'RECHECK_SCHEDULE':
           void applyState();
           return;
