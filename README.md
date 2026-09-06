@@ -153,19 +153,6 @@ npm run zip:firefox   # produces output/noctura-<version>-firefox.zip
 install, submit the zip from `npm run zip:firefox` to
 addons.mozilla.org — signed builds can then be installed permanently.)
 
-## Safari
-
-```bash
-npm run build:safari
-xcrun safari-web-extension-converter output/safari-mv2
-```
-
-This opens Xcode with a generated app+extension target. Build and run the app
-once, then enable the extension in Safari's **Settings → Extensions** (and,
-on first run, allow unsigned extensions via **Develop → Allow Unsigned
-Extensions** if you're on a non-App Store build). Requires Xcode and an Apple
-Developer account for anything beyond local testing/distribution.
-
 ## Preparing for the stores
 
 ```bash
@@ -217,6 +204,6 @@ catch up next time it's focused or reloaded.
 
 The shortcut is handled by the content script itself (not the browser's
 built-in extension-commands API), so it's fully customizable from the
-Settings page and works identically across Chrome, Arc, Firefox, and Safari.
+Settings page and works identically across Chrome, Arc, and Firefox.
 It only fires while a page has focus — that's expected, since it toggles dark
 mode *for that page*.
