@@ -30,7 +30,7 @@
 - **Scheduled dark mode** — switch on automatically during a daily time
   range you set (e.g. 8 PM–8 AM).
 - **Themes** — Classic (photos/videos untouched), Grayscale, or Sepia.
-- Works on Chrome, Arc, and other Chromium-based browsers, plus Firefox.
+- Works on Chrome/Chromium-based browsers, plus Firefox.
 
 ## Installing
 

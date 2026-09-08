@@ -92,7 +92,7 @@ schedule, since that's a time passing, not a settings change.
 
 ```bash
 npm install
-npm run dev            # Chrome/Arc-compatible dev build, auto-reloading
+npm run dev            # Chrome/Chromium-compatible dev build, auto-reloading
 npm run dev:firefox    # Same, targeting Firefox
 npm run compile        # Type-check only (vue-tsc), no build output
 ```
@@ -100,9 +100,8 @@ npm run compile        # Type-check only (vue-tsc), no build output
 `wxt` in dev mode can auto-launch a dedicated test browser profile with the
 extension already loaded (see [WXT's browser startup
 docs](https://wxt.dev/guide/essentials/config/browser-startup.html) to point
-it at a specific Chrome/Chromium binary). For loading into **Arc**
-specifically — not something WXT can auto-launch — build once and load it
-unpacked instead:
+it at a specific Chrome/Chromium binary). To load it manually instead, build
+once first:
 
 ```bash
 npm run build
@@ -110,7 +109,7 @@ npm run build
 
 ## Loading the extension
 
-1. Open `arc://extensions` (or `chrome://extensions` in Chrome).
+1. Open `chrome://extensions`.
 2. Turn on **Developer Mode** (toggle, top right).
 3. Click **Load unpacked**.
 4. Select the `output/chrome-mv3` folder produced by `npm run build` (not
@@ -121,7 +120,7 @@ For active development, use `npm run dev` instead of `npm run build` — it
 outputs to `output/chrome-mv3-dev` (a separate folder from the production
 `chrome-mv3` build, so load that one in step 4 above instead). Its build
 has a WebSocket client baked into the background script that connects back
-to the dev server, so after loading it into Arc once, most code changes
+to the dev server, so after loading it once, most code changes
 auto-reload the extension by themselves — no need to keep re-clicking
 "Load unpacked". A manual reload is still occasionally needed for changes
 the extension can't apply to itself, like editing `wxt.config.ts`'s
@@ -237,6 +236,6 @@ other dark mode extensions.
 
 The shortcut is handled by the content script itself (not the browser's
 built-in extension-commands API), so it's fully customizable from the
-Settings page and works identically across Chrome, Arc, and Firefox.
+Settings page and works identically across Chrome and Firefox.
 It only fires while a page has focus — that's expected, since it toggles dark
 mode *for that page*.

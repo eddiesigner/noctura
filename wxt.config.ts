@@ -3,7 +3,7 @@ import { defineConfig } from 'wxt';
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   // Default is ".output" — macOS's native folder picker hides dotfiles by
-  // default, which makes "Load unpacked" in Arc/Chrome annoying to point at
+  // default, which makes "Load unpacked" in Chrome annoying to point at
   // it. A plain, visible folder name avoids that friction.
   outDir: 'output',
   // Keeps all source code (entrypoints/, components/, composables/, utils/,
